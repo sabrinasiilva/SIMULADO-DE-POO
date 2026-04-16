@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulado - Engenharia de Software e OO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .option-btn {
+            text-align: left;
+            white-space: normal;
+            word-wrap: break-word;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .option-btn:hover {
+            transform: translateX(5px);
+        }
+        .quiz-card {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: none;
+            border-radius: 12px;
+        }
+        .menu-card {
+            cursor: pointer;
+            transition: transform 0.2s;
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+        .correct-answer {
+            background-color: #198754 !important;
+            color: white !important;
+            border-color: #198754 !important;
+        }
+        .wrong-answer {
+            background-color: #dc3545 !important;
+            color: white !important;
+            border-color: #dc3545 !important;
+        }
+        #feedback-msg {
+            font-weight: bold;
+            font-size: 1.2rem;
+            min-height: 30px;
+        }
+        .review-item {
+            border-left: 4px solid #dc3545;
+            background-color: #fff;
+        }
+        .history-item {
+            border-left: 4px solid #0d6efd;
+            background-color: #fff;
+        }
+
+        /* RESPONSIVIDADE MOBILE */
+        @media (max-width: 576px) {
+            .container.py-5 {
+                padding-top: 1.5rem !important;
+                padding-bottom: 1.5rem !important;
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+
+            h1.display-5 {
+                font-size: 1.6rem;
+            }
+
+            h1.display-4 {
+                font-size: 1.5rem;
+            }
+
+            h2.display-6 {
+                font-size: 1.3rem;
+            }
+
+            .card-body.p-4 {
+                padding: 1rem !important;
+            }
+
+            .card.quiz-card.p-5 {
+                padding: 1.5rem !important;
+            }
+
+            #question-text {
+                font-size: 1.05rem;
+            }
+
+            .option-btn {
+                font-size: 0.95rem;
+                padding: 10px 14px;
+            }
+
+            #feedback-msg {
+                font-size: 1rem;
+            }
+
+            /* Header do quiz: empilha titulo e botão */
+            #quiz-view .d-flex.justify-content-between {
+                flex-direction: column;
+                gap: 8px;
+            }
+            #quiz-view .d-flex.justify-content-between .btn {
+                align-self: flex-end;
+            }
+
+            /* Resultado */
+            #result-score {
+                font-size: 1.4rem;
+            }
+
+            .result-view .row.mb-4 .p-3 h2 {
+                font-size: 1.3rem;
+            }
+
+            /* Histórico: empilha ao invés de lado a lado */
+            .history-item.d-flex {
+                flex-direction: column;
+                gap: 6px;
+            }
+            .history-item .text-end {
+                text-align: left !important;
+            }
+
+            /* Botões do histórico */
+            #history-view .d-flex.gap-3 {
+                flex-direction: column;
+            }
+            #history-view .d-flex.gap-3 .btn {
+                width: 100%;
+            }
+
+            /* Review items */
+            .review-item p {
+                font-size: 0.9rem;
+                word-break: break-word;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container py-5">
+    
+    <div id="menu-view">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold text-primary">📚 Mega Simulado</h1>
+            <p class="lead text-muted">Engenharia de Software 1 e Análise Orientada a Objetos</p>
+            <button class="btn btn-outline-secondary mt-2" onclick="showHistory()">🕒 Ver Meu Histórico</button>
+        </div>
+        <div class="row g-4" id="menu-container">
+            </div>
+    </div>
+
+    <div id="history-view" class="d-none">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <div class="card quiz-card p-5">
+                    <h2 class="display-6 mb-4 fw-bold text-primary">🕒 Seu Histórico</h2>
+                    
+                    <div id="history-list" class="d-flex flex-column gap-3 text-start mb-4">
+                        </div>
+
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <button class="btn btn-outline-danger" onclick="clearHistory()">🗑️ Limpar Histórico</button>
+                        <button class="btn btn-primary" onclick="showMenu()">🔙 Voltar ao Menu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="quiz-view" class="d-none">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 id="quiz-title" class="text-primary mb-0">Nome do Quiz</h4>
+                    <button class="btn btn-outline-danger btn-sm" onclick="endQuiz()">🚪 Sair e ver Nota</button>
+                </div>
+                
+                <div class="progress mb-4" style="height: 10px;">
+                    <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;"></div>
+                </div>
+
+                <div class="card quiz-card">
+                    <div class="card-body p-4">
+                        <p class="text-muted small mb-2" id="question-counter">Pergunta 1 de 10</p>
+                        <h4 class="mb-4" id="question-text">Texto da Pergunta?</h4>
+                        
+                        <div id="options-container" class="d-grid gap-2">
+                            </div>
+
+                        <div class="mt-4 text-center" id="feedback-msg"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-view" class="d-none">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <div class="card quiz-card p-5">
+                    <h1 class="display-4 mb-3">📊 Boletim Final</h1>
+                    <h3 id="result-quiz-title" class="text-secondary mb-4">Nome do Quiz</h3>
+                    
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <div class="p-3 bg-success bg-opacity-10 rounded text-success border border-success">
+                                <h2 class="mb-0" id="result-correct">0</h2>
+                                <small>ACERTOS</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-danger bg-opacity-10 rounded text-danger border border-danger">
+                                <h2 class="mb-0" id="result-wrong">0</h2>
+                                <small>ERROS</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="fw-bold mb-3" id="result-score">Nota: 0%</h2>
+                    
+                    <div class="alert" id="result-feedback" role="alert"></div>
+
+                    <div id="review-section" class="mt-4 text-start d-none">
+                        <h4 class="text-danger mb-3 border-bottom pb-2">🔍 Questões para Revisar:</h4>
+                        <div id="review-list" class="d-flex flex-column gap-3">
+                            </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-lg mt-4 w-100" onclick="showMenu()">🔙 Voltar ao Menu Principal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // BANCO DE DADOS GIGANTE
+    const quizzes = {
+        "1": {
+            "nome": "Fundamentos de OO",
+            "perguntas": [
+                {"pergunta": "Classe é:", "opcoes": ["Um molde para criar objetos", "Um objeto já criado", "Um método", "Um arquivo"]},
+                {"pergunta": "Objeto é:", "opcoes": ["Uma instância de uma classe", "Um molde", "Uma função", "Um atributo"]},
+                {"pergunta": "Atributos representam:", "opcoes": ["Dados do objeto", "Ações", "Funções", "Comandos"]},
+                {"pergunta": "Métodos representam:", "opcoes": ["Comportamentos do objeto", "Dados", "Variáveis", "Construtores"]},
+                {"pergunta": "O método __init__ em Python é:", "opcoes": ["O construtor da classe", "Um atributo", "Um método comum", "Um objeto"]},
+                {"pergunta": "O que o __init__ faz?", "opcoes": ["Inicializa o objeto", "Apaga dados", "Executa loops", "Cria métodos"]},
+                {"pergunta": "O que é estado de um objeto?", "opcoes": ["Seus dados/atributos", "Suas ações", "Seus métodos", "Sua classe"]},
+                {"pergunta": "O que é comportamento?", "opcoes": ["Métodos do objeto", "Dados", "Atributos", "Variáveis"]},
+                {"pergunta": "O self representa:", "opcoes": ["O próprio objeto", "A classe", "Outro objeto", "Um método"]},
+                {"pergunta": "def serve para:", "opcoes": ["Definir funções/métodos", "Criar atributos", "Criar objetos", "Apagar dados"]},
+                {"pergunta": "Um objeto pode ter:", "opcoes": ["Atributos e métodos", "Apenas atributos", "Apenas métodos", "Nenhum"]},
+                {"pergunta": "Objetos da mesma classe:", "opcoes": ["Podem ter valores diferentes", "Sempre têm os mesmos valores", "Não têm atributos", "Não têm métodos"]},
+                {"pergunta": "Cada objeto:", "opcoes": ["Tem seus próprios atributos", "Compartilha os mesmos dados", "Não tem estado", "Não tem comportamento"]},
+                {"pergunta": "Um método:", "opcoes": ["É uma ação do objeto", "É uma variável", "É um dado", "É um atributo"]},
+                {"pergunta": "Atributos variam:", "opcoes": ["Entre objetos", "Entre métodos", "Entre classes", "Não variam"]},
+                {"pergunta": "O que é um objeto?", "opcoes": ["Algo que pode ser identificado, tem características e ações", "Um código pronto", "Um tipo de variável", "Um algoritmo"]},
+                {"pergunta": "Qual das opções é um exemplo de objeto?", "opcoes": ["Aluno", "Classe", "Função", "Sistema"]},
+                {"pergunta": "O que é uma classe?", "opcoes": ["Um modelo ou molde para criar objetos", "Um objeto real", "Um banco de dados", "Um código executável"]},
+                {"pergunta": "Classe e objeto são:", "opcoes": ["Relacionados (classe gera objetos)", "A mesma coisa", "Totalmente independentes", "Apenas conceitos teóricos"]},
+                {"pergunta": "Um objeto é:", "opcoes": ["Uma instancia da classe", "Um conceito abstrato", "Um tipo de variável", "Um método"]},
+                {"pergunta": "Na analogia do biscoito, o molde representa:", "opcoes": ["Classe", "Objeto", "Sistema", "Código"]},
+                {"pergunta": "Na analogia da casa, a planta representa:", "opcoes": ["Classe", "Objeto", "Função", "Método"]},
+                {"pergunta": "Na analogia do bolo, o bolo pronto é:", "opcoes": ["Objeto", "Classe", "Método", "Sistema"]},
+                {"pergunta": "Podemos criar vários objetos a partir de uma classe?", "opcoes": ["Sim", "Não", "Apenas 1", "Depende do código"]},
+                {"pergunta": "O que muda entre objetos da mesma classe?", "opcoes": ["As caracteristicas e valores", "Nada", "Apenas o nome", "A linguagem"]},
+                {"pergunta": "Qual comando cria uma classe em Python?", "opcoes": ["class", "function", "def", "create"]},
+                {"pergunta": "O que faz o 'pass' em uma classe?", "opcoes": ["Indica classe vazia", "Executa código", "Ignora erro", "Cria objeto"]},
+                {"pergunta": "aluno1 = Aluno() faz o quê?", "opcoes": ["Cria um objeto", "Cria uma função", "Cria uma classe", "Cria variável comum"]},
+                {"pergunta": "aluno1 = Aluno() e aluno2 = Aluno() significa:", "opcoes": ["São objetos diferentes da mesma classe", "São o mesmo objeto", "É erro", "Não funciona"]},
+                {"pergunta": "O print de um objeto mostra:", "opcoes": ["Referência na memória", "O código", "O nome da classe", "Nada"]},
+                {"pergunta": "A orientação a objetos tenta representar:", "opcoes": ["O mundo real", "Apenas código", "Banco de dados", "Hardware"]},
+                {"pergunta": "Qual é o foco da análise orientada a objetos?", "opcoes": ["Entender o problema antes de codar", "Programar direto", "Criar interfaces", "Testar sistemas"]},
+                {"pergunta": "Um sistema é considerado complexo quando:", "opcoes": ["Tem muitos elementos e relações", "Tem poucas partes", "É pequeno", "É rápido"]},
+                {"pergunta": "Qual representa melhor uma classe?", "opcoes": ["Aluna", "João", "Maria", "Carlos"]},
+                {"pergunta": "Qual representa objetos?", "opcoes": ["João, Maria e Carlos", "Classe", "Aluno", "Sistema"]}
+            ]
+        },
+        "2": {
+            "nome": "Encapsulamento",
+            "perguntas": [
+                {"pergunta": "Encapsulamento é:", "opcoes": ["Proteger os dados do objeto", "Criar objetos", "Criar funções", "Criar variáveis"]},
+                {"pergunta": "O objetivo do encapsulamento é:", "opcoes": ["Controlar acesso aos dados", "Deixar código bagunçado", "Aumentar erros", "Apagar atributos"]},
+                {"pergunta": "Sem encapsulamento:", "opcoes": ["Qualquer parte pode alterar dados indevidamente", "O sistema fica mais seguro", "Nada muda", "Não existem objetos"]},
+                {"pergunta": "Em Python, usamos '_' para:", "opcoes": ["Indicar atributo protegido", "Apagar dados", "Criar função", "Criar classe"]},
+                {"pergunta": "O que '_saldo' significa:", "opcoes": ["Protegido (não acessar diretamente)", "Público", "Privado absoluto", "Método"]},
+                {"pergunta": "Por que não alterar atributos diretamente?", "opcoes": ["Porque pode gerar erros e quebrar regras do sistema", "Porque é proibido", "Porque não funciona", "Porque é lento"]},
+                {"pergunta": "Métodos devem:", "opcoes": ["Controlar alterações nos dados", "Ignorar atributos", "Apagar classes", "Apagar funções"]},
+                {"pergunta": "Exemplo de encapsulamento:", "opcoes": ["Usar método sacar()", "Alterar saldo diretamente", "Mudar variável livremente", "Apagar atributo"]},
+                {"pergunta": "A analogia do caixa eletrônico mostra:", "opcoes": ["Controle de acesso aos dados", "Acesso livre", "Erros", "Código aberto"]},
+                {"pergunta": "Encapsulamento ajuda a:", "opcoes": ["Organizar e proteger o sistema", "Bagunçar código", "Apagar dados", "Criar bugs"]},
+                {"pergunta": "O controle remoto é exemplo de:", "opcoes": ["Encapsulamento", "Classe", "Objeto simples", "Função"]},
+                {"pergunta": "Boa prática:", "opcoes": ["Usar métodos para alterar dados", "Alterar direto atributo", "Apagar atributos", "Ignorar encapsulamento"]},
+                {"pergunta": "Orientação a Objetos ajuda a:", "opcoes": ["Estruturar melhor o sistema", "Desorganizar", "Evitar classes", "Evitar métodos"]}
+            ]
+        },
+        "3": {
+            "nome": "UML Básica e Modelagem Visual",
+            "perguntas": [
+                {"pergunta": "UML significa:", "opcoes": ["Unified Modeling Language", "Universal Modeling Language", "Unified Machine Language", "User Modeling Language"]},
+                {"pergunta": "A UML é usada para:", "opcoes": ["Planejar sistemas antes de programar", "Programar diretamente", "Criar banco de dados", "Testar software"]},
+                {"pergunta": "UML utiliza:", "opcoes": ["Diagramas visuais", "Código", "Scripts", "Funções"]},
+                {"pergunta": "O Diagrama de Casos de Uso mostra:", "opcoes": ["O que o usuário pode fazer no sistema", "Estrutura do sistema", "Fluxo de dados", "Código"]},
+                {"pergunta": "Diagrama de Classes mostra:", "opcoes": ["Estrutura do sistema", "Interface gráfica", "Usuários", "Fluxo"]},
+                {"pergunta": "No diagrama de classes temos:", "opcoes": ["Classes, atributos e métodos", "Apenas métodos", "Apenas atributos", "Apenas usuários"]},
+                {"pergunta": "Diagrama de Sequência mostra:", "opcoes": ["Ordem das interações entre objetos e Tempo de execução", "Banco de dados", "Interface", "Código"]},
+                {"pergunta": "Diagrama de Atividades representa:", "opcoes": ["Fluxo do processo com decisões", "Classes", "Objetos", "Banco de dados"]},
+                {"pergunta": "Diagrama de Estados mostra:", "opcoes": ["Mudança de estados de um objeto", "Estrutura", "Métodos", "Classes"]},
+                {"pergunta": "Diagrama de Componentes mostra:", "opcoes": ["Divisão física e estrutural do sistema em partes", "Usuários", "Fluxo", "Dados"]},
+                {"pergunta": "UML ajuda a:", "opcoes": ["Evitar erros antes da programação", "Criar bugs", "Apagar código", "Compilar"]},
+                {"pergunta": "Casos de uso são usados para:", "opcoes": ["Levantamento de requisitos", "Código", "Testes", "Banco"]},
+                {"pergunta": "UML serve para:", "opcoes": ["Organizar ideias do sistema", "Executar código", "Criar funções", "Criar variáveis"]},
+                {"pergunta": "UML melhora:", "opcoes": ["Comunicação da equipe", "Confusão", "Bugs", "Lentidão"]},
+                {"pergunta": "UML é usada:", "opcoes": ["Antes de programar", "Depois de programar", "Durante execução", "Após testes"]},
+                {"pergunta": "No diagrama de atividades, o losango representa:", "opcoes": ["Decisão", "Início", "Fim", "Classe"]},
+                {"pergunta": "Qual símbolo representa início no diagrama de atividades?", "opcoes": ["Círculo preenchido", "Quadrado", "Triângulo", "Losango"]}
+            ]
+        },
+        "4": {
+            "nome": "Relacionamentos (Herança, Associação...)",
+            "perguntas": [
+                {"pergunta": "Herança é:", "opcoes": ["Herdar características de outra classe (Especialização)", "Criar função", "Criar variável", "Criar objeto"]},
+                {"pergunta": "Herança permite:", "opcoes": ["Reutilização de código", "Repetição", "Apagar código", "Criar bugs"]},
+                {"pergunta": "Superclasse é:", "opcoes": ["Classe mais geral", "Classe filha", "Método", "Atributo"]},
+                {"pergunta": "Subclasse é:", "opcoes": ["Classe mais específica", "Classe pai", "Método", "Variável"]},
+                {"pergunta": "Exemplo correto de herança:", "opcoes": ["Aluno é uma Pessoa", "Carro é um Motor", "Pedido é Cliente", "Motor é carro"]},
+                {"pergunta": "Herança representa a relação de:", "opcoes": ["'É um tipo de'", "'Tem um'", "'Usa'", "'Depende'"]},
+                {"pergunta": "Vantagem da herança:", "opcoes": ["Código limpo e organizado", "Código duplicado", "Erros", "Lentidão"]},
+                {"pergunta": "Herança ajuda a:", "opcoes": ["Criar hierarquia de classes", "Bagunçar sistema", "Apagar classes", "Criar bugs"]},
+                {"pergunta": "Aluno herdando Pessoa significa:", "opcoes": ["Aluno é uma Pessoa", "Aluno não é pessoa", "Pessoa herda aluno", "Não há relação"]},
+                {"pergunta": "Herança NÃO é:", "opcoes": ["Associação", "Relação", "Organização", "Código"]},
+                {"pergunta": "Associação significa:", "opcoes": ["Uma classe se relaciona/usa outra", "'É um tipo de'", "Herança", "Classe filha"]},
+                {"pergunta": "Especialização é:", "opcoes": ["Tornar mais específico (Subclasse)", "Tornar mais geral", "Apagar", "Criar"]},
+                {"pergunta": "Generalização é:", "opcoes": ["Tornar mais geral (Superclasse)", "Tornar específico", "Apagar", "Criar"]},
+                {"pergunta": "Subclasse pode:", "opcoes": ["Herdar atributos e métodos", "Apagar classe", "Criar banco", "Criar arquivo"]},
+                {"pergunta": "UML representa herança com:", "opcoes": ["Seta vazada com triângulo", "Linha simples", "Círculo", "Quadrado"]},
+                {"pergunta": "Multiplicidade 1..* significa:", "opcoes": ["Um ou muitos", "Apenas 1 objeto", "Zero ou muitos", "Exatamente dois"]},
+                {"pergunta": "Agregação indica:", "opcoes": ["Parte independente do todo (Relação 'Todo-Parte')", "Dependência total", "Relação forte", "Herança múltipla"]},
+                {"pergunta": "Composição indica:", "opcoes": ["Relação forte onde a parte depende do todo", "Relação fraca", "Independência", "Uso opcional"]},
+                {"pergunta": "Dependência significa:", "opcoes": ["Classe precisa de outra temporariamente para funcionar", "Classe herda outra", "Classe ignora outra", "Classe é independente"]}
+            ]
+        },
+        "5": {
+            "nome": "Eng. de Software (Padrões, Clean Code...)",
+            "perguntas": [
+                {"pergunta": "Arquitetura de software é:", "opcoes": ["Organização e estrutura do sistema", "Código", "Interface", "Banco"]},
+                {"pergunta": "Frontend representa:", "opcoes": ["Interface com o usuário (Telas)", "Banco de dados", "API", "Lógica"]},
+                {"pergunta": "Backend é responsável por:", "opcoes": ["Regras de negócio e Lógica", "Interface", "Tela", "Layout"]},
+                {"pergunta": "Banco de dados armazena:", "opcoes": ["Dados persistentes", "Interface", "Lógica", "API"]},
+                {"pergunta": "MVC significa:", "opcoes": ["Model-View-Controller", "Model-View-Code", "Main-View-Control", "Model-Variable-Control"]},
+                {"pergunta": "Em MVC, quem valida regras (como login)?", "opcoes": ["Controller", "View", "Model", "Banco"]},
+                {"pergunta": "Em MVC, quem mostra o resultado?", "opcoes": ["View", "Model", "Controller", "API"]},
+                {"pergunta": "Scrum foca em:", "opcoes": ["Entregas contínuas e iterativas", "Código extenso", "Documentação pesada", "UML"]},
+                {"pergunta": "Backlog é:", "opcoes": ["Lista de tarefas/requisitos do sistema", "Código", "Sprint", "Daily"]},
+                {"pergunta": "Sprint é:", "opcoes": ["Período de tempo fixo de desenvolvimento", "Reunião", "Lista", "Código"]},
+                {"pergunta": "Daily é:", "opcoes": ["Reunião diária rápida de alinhamento", "Planejamento", "Sprint", "Código"]},
+                {"pergunta": "Daily dura em média:", "opcoes": ["5 a 15 min", "1h", "30 min", "2h"]},
+                {"pergunta": "Padrões de projeto (Design Patterns) são:", "opcoes": ["Soluções prontas e reutilizáveis para problemas comuns", "Erros de código", "Código executável", "Diagramas abstratos"]},
+                {"pergunta": "Padrões evitam:", "opcoes": ["Reinventar soluções (reinventar a roda)", "Escrever código", "Bugs de hardware", "UML"]},
+                {"pergunta": "Factory é um padrão de tipo:", "opcoes": ["Criacional", "Estrutural", "Comportamental", "Arquitetural"]},
+                {"pergunta": "Adapter é um padrão de tipo:", "opcoes": ["Estrutural", "Criacional", "Comportamental", "Banco"]},
+                {"pergunta": "Observer é um padrão de tipo:", "opcoes": ["Comportamental", "Criacional", "Estrutural", "Interface"]},
+                {"pergunta": "Código limpo (Clean Code) é:", "opcoes": ["Legível e simples", "Complexo", "Difícil de ler", "Extenso"]},
+                {"pergunta": "Uma função deve:", "opcoes": ["Fazer uma única coisa bem feita", "Fazer de tudo", "Fazer várias coisas", "Não retornar nada"]},
+                {"pergunta": "O nome de uma variável deve ser:", "opcoes": ["Significativo e descritivo", "Curto demais", "Aleatório", "Sempre Numérico"]},
+                {"pergunta": "Código ruim geralmente é:", "opcoes": ["Desorganizado e acoplado", "Simples", "Pequeno", "Limpo"]},
+                {"pergunta": "Código bom facilita:", "opcoes": ["Manutenção do software", "Confusão", "Erros", "Bugs"]},
+                {"pergunta": "O código 'function x(a){return a*0.9;}' segue boas práticas?", "opcoes": ["Não, o nome da função e variável são ruins", "Sim, está curto", "Sim, ótimo", "Não, possui erro lógico"]},
+                {"pergunta": "Qual problema no código: 'function calcular(a,b,c) { return a+b+c; }' ?", "opcoes": ["Falta de organização e responsabilidade (nome genérico)", "Erro de Sintaxe", "Sem retorno", "Erro lógico"]},
+                {"pergunta": "Melhor versão para uma função genérica e inflada seria:", "opcoes": ["Dividir responsabilidades em funções menores se necessário", "Manter a mesma função", "Remover o return", "Aumentar o código no mesmo escopo"]}
+            ]
+        }
+    };
+
+    // VARIÁVEIS DE ESTADO
+    let currentQuiz = null;
+    let currentQuestions = [];
+    let currentQuestionIndex = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let answeredQuestions = 0;
+    let isAnswering = false;
+    let wrongAnswersList = [];
+
+    // INICIALIZAÇÃO DO MENU
+    window.onload = () => {
+        const menuContainer = document.getElementById('menu-container');
+        for (const [key, quiz] of Object.entries(quizzes)) {
+            const cardHtml = `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card menu-card h-100 bg-white" onclick="startQuiz('${key}')">
+                        <div class="card-body text-center p-4">
+                            <h2 class="display-6 mb-3">📘</h2>
+                            <h5 class="card-title text-dark fw-bold">${quiz.nome}</h5>
+                            <p class="card-text text-muted small">${quiz.perguntas.length} questões</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            menuContainer.innerHTML += cardHtml;
+        }
+    };
+
+    // FUNÇÕES DE EMBARALHAR (Fisher-Yates)
+    function shuffleArray(array) {
+        let newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+    }
+
+    // NAVEGAÇÃO
+    function showMenu() {
+        document.getElementById('menu-view').classList.remove('d-none');
+        document.getElementById('quiz-view').classList.add('d-none');
+        document.getElementById('result-view').classList.add('d-none');
+        document.getElementById('history-view').classList.add('d-none');
+    }
+
+    function showHistory() {
+        document.getElementById('menu-view').classList.add('d-none');
+        document.getElementById('quiz-view').classList.add('d-none');
+        document.getElementById('result-view').classList.add('d-none');
+        document.getElementById('history-view').classList.remove('d-none');
+
+        const historyList = document.getElementById('history-list');
+        historyList.innerHTML = ''; // Limpa a lista
+
+        // Pega do localStorage
+        let history = JSON.parse(localStorage.getItem('quizHistory')) || [];
+
+        if (history.length === 0) {
+            historyList.innerHTML = '<div class="alert alert-secondary text-center">Nenhum simulado concluído ainda.</div>';
+            return;
+        }
+
+        // Inverte para mostrar o mais recente primeiro
+        history.reverse().forEach(item => {
+            let colorClass = item.percentage >= 70 ? 'text-success' : 'text-danger';
+            const historyHTML = `
+                <div class="p-3 rounded history-item border d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1 fw-bold">${item.quizName}</h5>
+                        <p class="mb-0 small text-muted">🗓️ ${item.date}</p>
+                    </div>
+                    <div class="text-end">
+                        <h4 class="mb-0 fw-bold ${colorClass}">${item.percentage.toFixed(1)}%</h4>
+                        <small class="text-muted">${item.correct}/${item.total} acertos</small>
+                    </div>
+                </div>
+            `;
+            historyList.innerHTML += historyHTML;
+        });
+    }
+
+    function clearHistory() {
+        if(confirm("Tem certeza que deseja apagar todo o seu histórico de notas?")) {
+            localStorage.removeItem('quizHistory');
+            showHistory(); // Atualiza a tela
+        }
+    }
+
+    function saveToHistory(quizName, correct, total, percentage) {
+        let history = JSON.parse(localStorage.getItem('quizHistory')) || [];
+        
+        const newItem = {
+            quizName: quizName,
+            correct: correct,
+            total: total,
+            percentage: percentage,
+            date: new Date().toLocaleString('pt-BR') // Ex: 14/04/2026, 19:47:00
+        };
+
+        history.push(newItem);
+        localStorage.setItem('quizHistory', JSON.stringify(history));
+    }
+
+    // INICIAR O QUIZ
+    function startQuiz(quizId) {
+        currentQuiz = quizzes[quizId];
+        currentQuestions = shuffleArray(currentQuiz.perguntas);
+        currentQuestionIndex = 0;
+        correctCount = 0;
+        wrongCount = 0;
+        answeredQuestions = 0;
+        wrongAnswersList = [];
+
+        document.getElementById('quiz-title').innerText = currentQuiz.nome;
+        
+        document.getElementById('menu-view').classList.add('d-none');
+        document.getElementById('quiz-view').classList.remove('d-none');
+        document.getElementById('result-view').classList.add('d-none');
+
+        loadQuestion();
+    }
+
+    // CARREGAR PERGUNTA
+    function loadQuestion() {
+        isAnswering = false;
+        document.getElementById('feedback-msg').innerText = '';
+
+        const question = currentQuestions[currentQuestionIndex];
+        const total = currentQuestions.length;
+
+        document.getElementById('question-counter').innerText = `Pergunta ${currentQuestionIndex + 1} de ${total}`;
+        document.getElementById('question-text').innerText = question.pergunta;
+
+        const progressPercent = (currentQuestionIndex / total) * 100;
+        document.getElementById('progress-bar').style.width = progressPercent + '%';
+
+        // A resposta correta é sempre a primeira opção no array original
+        const correctAnswer = question.opcoes[0];
+
+        // Embaralha as opções para exibição
+        const shuffledOptions = shuffleArray(question.opcoes);
+
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+
+        shuffledOptions.forEach(option => {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-outline-primary option-btn w-100';
+            btn.innerText = option;
+            btn.onclick = () => checkAnswer(btn, option, correctAnswer);
+            container.appendChild(btn);
+        });
+    }
+
+    // VERIFICAR RESPOSTA
+    function checkAnswer(selectedBtn, selected, correct) {
+        if (isAnswering) return;
+        isAnswering = true;
+        answeredQuestions++;
+
+        const allButtons = document.querySelectorAll('.option-btn');
+
+        if (selected === correct) {
+            correctCount++;
+            selectedBtn.classList.add('correct-answer');
+            document.getElementById('feedback-msg').innerHTML = '<span class="text-success">✅ Correto!</span>';
+        } else {
+            wrongCount++;
+            selectedBtn.classList.add('wrong-answer');
+            document.getElementById('feedback-msg').innerHTML = '<span class="text-danger">❌ Errado!</span>';
+
+            // Destaca a resposta correta
+            allButtons.forEach(btn => {
+                if (btn.innerText === correct) {
+                    btn.classList.add('correct-answer');
+                }
+            });
+
+            wrongAnswersList.push({
+                pergunta: currentQuestions[currentQuestionIndex].pergunta,
+                respostaCorreta: correct,
+                respostaDada: selected
+            });
+        }
+
+        // Desabilita todos os botões
+        allButtons.forEach(btn => btn.disabled = true);
+
+        // Próxima pergunta após 1.5s
+        setTimeout(() => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentQuestions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }, 1500);
+    }
+
+    // ENCERRAR QUIZ (botão sair)
+    function endQuiz() {
+        if (confirm('Deseja encerrar o simulado e ver sua nota?')) {
+            showResults();
+        }
+    }
+
+    // MOSTRAR RESULTADOS
+    function showResults() {
+        document.getElementById('quiz-view').classList.add('d-none');
+        document.getElementById('result-view').classList.remove('d-none');
+
+        const total = answeredQuestions;
+        const percentage = total > 0 ? (correctCount / total) * 100 : 0;
+
+        document.getElementById('result-quiz-title').innerText = currentQuiz.nome;
+        document.getElementById('result-correct').innerText = correctCount;
+        document.getElementById('result-wrong').innerText = wrongCount;
+        document.getElementById('result-score').innerText = `Nota: ${percentage.toFixed(1)}%`;
+
+        const feedbackEl = document.getElementById('result-feedback');
+        if (percentage >= 90) {
+            feedbackEl.className = 'alert alert-success';
+            feedbackEl.innerText = '🏆 Excelente! Você arrasou!';
+        } else if (percentage >= 70) {
+            feedbackEl.className = 'alert alert-primary';
+            feedbackEl.innerText = '👏 Muito bom! Continue assim!';
+        } else if (percentage >= 50) {
+            feedbackEl.className = 'alert alert-warning';
+            feedbackEl.innerText = '⚠️ Razoável. Revise os temas que errou!';
+        } else {
+            feedbackEl.className = 'alert alert-danger';
+            feedbackEl.innerText = '📖 Precisa estudar mais. Não desista!';
+        }
+
+        // Salvar no histórico
+        saveToHistory(currentQuiz.nome, correctCount, total, percentage);
+
+        // Mostrar revisão dos erros
+        const reviewSection = document.getElementById('review-section');
+        const reviewList = document.getElementById('review-list');
+        reviewList.innerHTML = '';
+
+        if (wrongAnswersList.length > 0) {
+            reviewSection.classList.remove('d-none');
+            wrongAnswersList.forEach((item, index) => {
+                const reviewHTML = `
+                    <div class="p-3 rounded review-item border">
+                        <p class="fw-bold mb-1">${index + 1}. ${item.pergunta}</p>
+                        <p class="mb-1 text-danger">❌ Sua resposta: ${item.respostaDada}</p>
+                        <p class="mb-0 text-success">✅ Correta: ${item.respostaCorreta}</p>
+                    </div>
+                `;
+                reviewList.innerHTML += reviewHTML;
+            });
+        } else {
+            reviewSection.classList.add('d-none');
+        }
+    }
+</script>
+</body>
+</html>
